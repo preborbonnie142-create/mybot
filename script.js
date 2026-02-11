@@ -439,25 +439,28 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-async function sendMessage() {
-  const input = document.getElementById("user-input");
-  const chat = document.getElementById("chat");
-  const message = input.value;
+export default async function handler(req, res) {
+  const { message } = req.body;
 
-  // Show user message
-  chat.innerHTML += `<p><b>You:</b> ${message}</p>`;
+  try {
+    const hfKey = process.env.HF_API_KEY;
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/gpt2",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${hfKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ inputs: message })
+      }
+    );
 
-  // Call backend API
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-  });
+    const result = await response.json();
+    const reply = Array.isArray(result) ? result[0]?.generated_text : "No response";
 
-  const data = await res.json();
-
-  // Show AI reply
-  chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
-
-  input.value = "";
+    res.status(200).json({ reply });
+  } catch (err) {
+    res.status(500).json({ error: "AI API error" });
+  }
 }
