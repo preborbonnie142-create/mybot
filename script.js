@@ -438,3 +438,26 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+async function sendMessage() {
+  const input = document.getElementById("user-input");
+  const chat = document.getElementById("chat");
+  const message = input.value;
+
+  // Show user message
+  chat.innerHTML += `<p><b>You:</b> ${message}</p>`;
+
+  // Call backend API
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+
+  const data = await res.json();
+
+  // Show AI reply
+  chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
+
+  input.value = "";
+}
